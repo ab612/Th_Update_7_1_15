@@ -19,10 +19,10 @@ import networkx as nx
 import math
 
 # in progress function to identifie opposit nodes in cycle networks
-def oppositenodes(C,cnode1,cnode2):
+def oppositenodes(C,cnode1,cnode2,cycles):
     oppnodes=False;
-    cyc1=nx.get_node_attributes(C, "cycles")[cnode1]
-    cyc2=nx.get_node_attributes(C, "cycles")[cnode2]
+    cyc1=cycles[cnode1]
+    cyc2=cycles[cnode2]
     for n in cyc1:
         #if int(n) == float(n): ?
         for m in cyc2:
@@ -43,10 +43,10 @@ def inputCNodes(C,g):
 
 
 
-def opositeCnodes(C,cnode1, cnode2):
+def opositeCnodes(C,cnode1, cnode2,cycles):
     oppnodes=False;
-    cyc1=nx.get_node_attributes(C, "cycles")[cnode1]
-    cyc2=nx.get_node_attributes(C, "cycles")[cnode2]
+    cyc1=cycles[cnode1]
+    cyc2=cycles[cnode2]
     for n in cyc1:
         if(float(n)!=math.floor(float(n))):
             for m in cyc2:
@@ -120,6 +120,9 @@ for line in cycles.split('\n'):
 
 # creates undirected cycle network
 C=nx.Graph()
+#The export feature wasn't liking us putting the cycles as a node attribute, so I just created a separate dictionary for it
+#I also replaced all instances of "nx.get_node_attributes(C, 'cycles')" with "cycles", which should do the job
+cycles={}
 
 # declares a cycle node for each line in lines, delets the cycle node data from each line and then renames each line cycles 
 # bc that is the data they still contain
@@ -128,36 +131,37 @@ for line in lines:
     cycle=line
     cycle.remove(node)
     #ands a cycle node with the attribute of having its list of network nodes
-    C.add_node(node, cycles = line)
+    C.add_node(node)
+    cycles[node]=line
 
 dic={}
 #creates a dictionary for each expanded node in  each cycle node
 for c in C.nodes():
-    '''print c, nx.get_node_attributes(C, 'cycles')[c]'''
-    for expnode in nx.get_node_attributes(C, 'cycles')[c]:
+    '''print c, cycles[c]'''
+    for expnode in cycles[c]:
         if(float(expnode)!=int(float(expnode))):
             dic[expnode]=[]
 
 # assigns a cycle node for each expanded node
 for c in C.nodes():
-    '''print c, nx.get_node_attributes(C, 'cycles')[c]'''
-    for expnode in nx.get_node_attributes(C, 'cycles')[c]:
+    '''print c, cycles[c]'''
+    for expnode in cycles[c]:
         if(float(expnode)!=int(float(expnode))):
             current=dic[expnode]
             current.append(c)
             dic[expnode]=current
 
 #doing complicated stuff to print expanded node, it's inputs and then a list of cycles containg those inputs 
-'''
+
 for key in  dic.keys():
     cycnodes=dic[key]
     inputs=G.in_edges(key)
     print "INPUT",key,inputs
     for cnode1 in  range(len(cycnodes)):    
-        cyc1=nx.get_node_attributes(C, 'cycles')[cycnodes[cnode1]]    
+        cyc1=cycles[cycnodes[cnode1]]    
         for cnode2 in  range(len(cycnodes)):
             if(cnode2>cnode1):            
-                cyc2=nx.get_node_attributes(C, 'cycles')[cycnodes[cnode2]]   
+                cyc2=cycles[cycnodes[cnode2]]   
                 print "cyc1",cycnodes[cnode1],cyc1
                 print "cyc2",cycnodes[cnode2],cyc2            
                 inters1=[]
@@ -171,24 +175,24 @@ for key in  dic.keys():
                     trueboth=((true1 and true2) or (not true1 and not true2)) and trueboth
                 if(len(inters1)!=len(inters2)): C.add_edge(cycnodes[cnode1], cycnodes[cnode2]); print "NODE",cycnodes[cnode2],cycnodes[cnode1]             
                 elif(len(inters1)==len(inters2) and trueboth): C.add_edge(cycnodes[cnode1], cycnodes[cnode2]); print "NODE",cycnodes[cnode2],cycnodes[cnode1]
-'''
+
 #removing edges that connect cycles with opposite nodes            
 edgesremove=[]
 for e in C.edges():
     cnode1=e[0]
-    cnode1=e[1]
-    if oppositenodes(C,cnode1,cnode2):
+    cnode2=e[1]
+    if oppositenodes(C,cnode1,cnode2,cycles):
         edgesremove.append(e)
 C.remove_edges_from(edgesremove)
 
 #removing edges that connect cycles with opposite composit nodes
-edgesremove1=[]
-for e in C.edges():
-    cnode1=e[0]
-    cnode2=e[1]
-    if opositeCnodes(C,cnode1, cnode2):
-        edgesremove1.append(e)
-C.remove_edges_from(edgesremove1)
+# edgesremove1=[]
+# for e in C.edges():
+#     cnode1=e[0]
+#     cnode2=e[1]
+#     if opositeCnodes(C,cnode1, cnode2,cycles):
+#         edgesremove1.append(e)
+# C.remove_edges_from(edgesremove1)
 
 nx.write_gml(C, "th_cycleNetwork.gml")
     
