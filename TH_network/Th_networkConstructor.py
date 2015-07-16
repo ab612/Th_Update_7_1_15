@@ -35,15 +35,15 @@ def oppositenodes(C,cnode1,cnode2,cycles):
 
 
 #finds inputs of a composit nodes, inode is a list of incoming edges
-def inputCNodes(C,g):
+def inputCNodes(G,g):
    # for g in G.nodes():
         if(float(g)!=math.floor(float(g))):
-            innod=C.in_edges(g)
+            innod=G.in_edges(g)
             return innod
 
 
 
-def opositeCnodes(C,cnode1, cnode2,cycles):
+def opositeCnodes(C,G,cnode1, cnode2,cycles):
     oppnodes=False;
     cyc1=cycles[cnode1]
     cyc2=cycles[cnode2]
@@ -51,14 +51,37 @@ def opositeCnodes(C,cnode1, cnode2,cycles):
         if(float(n)!=math.floor(float(n))):
             for m in cyc2:
                 if(float(m)!=math.floor(float(m))):
-                    inputn = inputCNodes(C,n)
-                    inputm = inputCNodes(C,m)
-                    #I'm sorry about this but it's late, I'll fix it 
-                    if ( (float(inputn[0]) == (-1*float(inputm[0]))) or (float(inputn[1]) == (-1*float(inputm[0]))) or (float(inputn[1]) == (-1*float(inputm[1]))) or (float(inputn[0]) == (-1*float(inputm[0]))) ):
-                        oppnodes=True
-                        break
+                    inputn = inputCNodes(G,n)
+                    inputm = inputCNodes(G,m)
+                    for m in inputm:
+                        for n in inputn:
+                            if float(n[0]) == (-1*float(m[0])):
+                              oppnodes=True
+                              break  
+                        if oppnodes: break
+                    if oppnodes: break
             if oppnodes: break
-        return oppnodes
+        if oppnodes: break
+    return oppnodes
+                            
+                    
+''' 
+                    n0 = inputn[0]
+                    n1 = inputn[1]
+                    m0 = inputm[0]
+                    m1 = inputm[1]
+                    if (float(n0) == (-1*float(m0))):
+                        check1= true 
+                    if (float(inputn[1]) == (-1*float(inputm[0]))): 
+                        check2= True
+                    if (float(inputn[1]) == (-1*float(inputm[1]))):
+                        check3= True
+                    if (float(inputn[0]) == (-1*float(inputm[0]))):
+                        check4= True
+                    if ((check1 or check2)or(check3 or check4)):'''
+                        
+            
+        
     
 # "TH_node_names" is written NodNumber(i.e identifier) \t NodName(i.e. the actual protien or whatever) \n
 # reading in "TH_node_names as a string name
@@ -183,17 +206,17 @@ for e in C.edges():
     cnode2=e[1]
     if oppositenodes(C,cnode1,cnode2,cycles):
         edgesremove.append(e)
-C.remove_edges_from(edgesremove)
+C.remove_edges_from(edgesremove);
 
 #removing edges that connect cycles with opposite composit nodes
-# edgesremove1=[]
-# for e in C.edges():
-#     cnode1=e[0]
-#     cnode2=e[1]
-#     if opositeCnodes(C,cnode1, cnode2,cycles):
-#         edgesremove1.append(e)
-# C.remove_edges_from(edgesremove1)
+edgesremove1=[]
+for e in C.edges():
+     cnode1=e[0]
+     cnode2=e[1]
+     if opositeCnodes(C,G,cnode1, cnode2,cycles):
+         edgesremove1.append(e)
+C.remove_edges_from(edgesremove1)
 
-nx.write_gml(C, "th_cycleNetwork.gml")
+nx.write_gml(C, "th_cycleNetwork_removedCedes.gml")
     
  

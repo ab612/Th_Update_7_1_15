@@ -37,9 +37,9 @@ def oppositenodes(C,cnode1,cnode2,cycles):
 #finds inputs of a composit nodes, inode is a list of incoming edges
 def inputCNodes(C,g):
    # for g in G.nodes():
-        if(float(g)!=math.floor(float(g))):
-            innod=C.in_edges(g)
-            return innod
+   if (float(g)!=math.floor(float(g))):
+         innod = C.in_edges(g)
+         return innod
 
 
 
@@ -62,7 +62,7 @@ def opositeCnodes(C,cnode1, cnode2,cycles):
     
 # "TH_node_names" is written NodNumber(i.e identifier) \t NodName(i.e. the actual protien or whatever) \n
 # reading in "TH_node_names as a string name
-f = open("TH_node_names", "r")
+f = open("TLGLNetwork_names.txt", "r")
 name=f.read()
 f.close()
 
@@ -75,7 +75,7 @@ for line in names:
     
 #"TH_adjacency list is written NodeNumber \t downstream NodNumbers (spererated by \t) \n
 #creating a adjacency list adjlist[NodNumber][Downstreaam NodeNumbers]
-fadf=open("TH_adjacency list", "r")
+fadf=open("TLGLNetwork_adjlist.txt", "r")
 adjlist=[]
 fad=fadf.read().split("\n")
 fadf.close()
@@ -101,7 +101,7 @@ for line in adjlist:
 '''for g in G.nodes():
     #print g, nx.get_node_attributes(G, 'nodname')[g]'''
         
-nx.write_gml(G, "th_nodeNetwork.gml")
+nx.write_gml(G, "TLGL_nodeNetwork.gml")
 
 
 #end node network creation 
@@ -110,7 +110,7 @@ nx.write_gml(G, "th_nodeNetwork.gml")
 
 #Opens Cycle Network file, creats a list lines of line, line is in turn a list of strings 
 # from the Cycle Network file where [0] is the cycle node name and [1:] are the unordered nodes contained w/i that cycle
-fcy=open("ThNetwork_cycles", "r")
+fcy=open("TLGLNetwork_cycles.txt", "r")
 cycles=fcy.read()
 fcy.close()
 
@@ -151,7 +151,7 @@ for c in C.nodes():
             current.append(c)
             dic[expnode]=current
 
-#doing complicated stuff to print expanded node, it's inputs and then a list of cycles containg those inputs 
+#doing complicated stuff to print expanded node, it's inputs and then a list of cycles containg those inputs and also adding important edges
 
 for key in  dic.keys():
     cycnodes=dic[key]
@@ -176,6 +176,7 @@ for key in  dic.keys():
                 if(len(inters1)!=len(inters2)): C.add_edge(cycnodes[cnode1], cycnodes[cnode2]); print "NODE",cycnodes[cnode2],cycnodes[cnode1]             
                 elif(len(inters1)==len(inters2) and trueboth): C.add_edge(cycnodes[cnode1], cycnodes[cnode2]); print "NODE",cycnodes[cnode2],cycnodes[cnode1]
 
+
 #removing edges that connect cycles with opposite nodes            
 edgesremove=[]
 for e in C.edges():
@@ -186,14 +187,14 @@ for e in C.edges():
 C.remove_edges_from(edgesremove)
 
 #removing edges that connect cycles with opposite composit nodes
-# edgesremove1=[]
-# for e in C.edges():
-#     cnode1=e[0]
-#     cnode2=e[1]
-#     if opositeCnodes(C,cnode1, cnode2,cycles):
-#         edgesremove1.append(e)
-# C.remove_edges_from(edgesremove1)
+edgesremove1=[]
+for e in C.edges():
+     cnode1=e[0]
+     cnode2=e[1]
+     if opositeCnodes(C,cnode1, cnode2,cycles):
+         edgesremove1.append(e)
+C.remove_edges_from(edgesremove1)
 
-nx.write_gml(C, "th_cycleNetwork.gml")
+nx.write_gml(C, "TLGL_cycleNetwork.gml")
     
  
