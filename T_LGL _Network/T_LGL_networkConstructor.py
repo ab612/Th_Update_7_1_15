@@ -16,7 +16,28 @@
 # - composite node IDs  are only ever positive decimal #s
 
 import networkx as nx
-import math
+import math 
+import sets
+
+stabelMotifs=[]
+
+def isStableMotif(C,G,cn,cyclesdict):
+    isSM=True
+    for x in range(len(cn)):
+       if (float(x)==int(float(x))):
+           for y in range(x+1, len(cn)):
+                if oppositenodes(C,x,y,cyclesdict):
+                    isSM = False
+                    return isSM        
+       elif (float(y)==int(float(y))):
+            for y in range(x+1, len(cn)):
+                if oppositeCnodes(C,G,x,y,cyclesdict):
+                    isSM = False
+                    return isSM
+    return isSM
+        
+            
+                
 
 # in progress function to identifie opposit nodes in cycle networks
 def oppositenodes(C,cnode1,cnode2,cyclesdict):
@@ -35,14 +56,13 @@ def oppositenodes(C,cnode1,cnode2,cyclesdict):
 
 
 #finds inputs of a composit nodes, inode is a list of incoming edges
+
 def inputCNodes(G,g):
    # for g in G.nodes():
         #print g
         if(float(g)!=math.floor(float(g))):
             innod=G.in_edges(g)
             return innod
-
-
 
 def opositeCnodes(C,G,cnode1, cnode2,cyclesdict):
     oppnodes=False;
@@ -69,26 +89,28 @@ def opositeCnodes(C,G,cnode1, cnode2,cyclesdict):
             if oppnodes: break
         if oppnodes: break
     return oppnodes
-                            
-                    
-''' 
-                    n0 = inputn[0]
-                    n1 = inputn[1]
-                    m0 = inputm[0]
-                    m1 = inputm[1]
-                    if (float(n0) == (-1*float(m0))):
-                        check1= true 
-                    if (float(inputn[1]) == (-1*float(inputm[0]))): 
-                        check2= True
-                    if (float(inputn[1]) == (-1*float(inputm[1]))):
-                        check3= True
-                    if (float(inputn[0]) == (-1*float(inputm[0]))):
-                        check4= True
-                    if ((check1 or check2)or(check3 or check4)):'''
-                        
-            
-        
-    
+
+def redundantCnodeReduction(C, cyclesdict):
+    #might need to make 2 functions for this
+    #make a leave loop bool value
+    for cn1 in range(len(C.nodes())):
+        cyc1=cyclesdict[C.nodes[cn1]]
+        s1=set(cyc1)
+        for cn2 in range(cn1+1,len(C.nodes())): 
+            cyc2=cyclesdict[C.nodes[cn2]]
+            s2=set(cyc2)
+            if(len(s1)>len(s2)):
+                if s2.issubset(s1):
+                    C.remove_node(s2)
+                    if isStableMotif(C,s2):
+                        stabelMotifs.append(s2)
+                #remove s2
+            elif(len(s1)<len(s2)):
+                if s1.issubset(s2):
+                    C.remove_node(s1)
+                    if isStableMotif(C,s1):
+                        stabelMotifs.append(s1)
+
 # "TH_node_names" is written NodNumber(i.e identifier) \t NodName(i.e. the actual protien or whatever) \n
 # reading in "TH_node_names as a string name
 f = open("TLGLNetwork_names.txt", "r")
@@ -114,8 +136,7 @@ for line in fad:
     
 # creating a directed network G as the network of Nodes
 G=nx.DiGraph()
-'''for c in range(num_lines) : 
-     G.add_node(names[c].split('\t')[0], nodname = names[c].split('\t')[1])'''
+
 #creating Nodes in node network with string(node ID attribute) 
 # and string(nodename atribute) 
 for line in lines:
