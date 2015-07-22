@@ -19,6 +19,7 @@ import networkx as nx
 import math 
 import sets
 
+
 stabelMotifs=[]
             
 # in progress function to identifie opposit nodes in cycle networks
@@ -98,7 +99,7 @@ def isStableMotif(C,G,cn,cyclesdict):
            ieofx = G.in_edges(cn[x])
            ###check for parent edges contained w/i the stable moti
            for e in ieofx:
-               if not (setcn.__contains__(e[0])):
+               if e[0] not in setcn:
                    isSM = False
                    return isSM 
            for y in range(x+1, len(cn)):
@@ -116,8 +117,8 @@ def isStableMotif(C,G,cn,cyclesdict):
                         isSM = False
                         return isSM 
       
-    if isSM:
-        print cn,
+   # if isSM:
+        #print cn
     return isSM
         
 def redundantCnodeReduction(C, cyclesdict):
@@ -152,7 +153,7 @@ for line in names:
     
 #"TH_adjacency list is written NodeNumber \t downstream NodNumbers (spererated by \t) \n
 #creating a adjacency list adjlist[NodNumber][Downstreaam NodeNumbers]
-fadf=open("TLGLNetwork_adjlist.txt", "r")
+fadf=open("TLGLNetwork_adjlist", "r")
 adjlist=[]
 fad=fadf.read().split("\n")
 fadf.close()
@@ -167,7 +168,6 @@ G=nx.DiGraph()
 # and string(nodename atribute) 
 for line in lines:
     G.add_node(line[0],nodname=line[1])
-
 #for all node IDs in adjacencey list
 for line in adjlist:
     # add each downstream connection to adjacent Node IDs
@@ -186,7 +186,7 @@ nx.write_gml(G, "TLGL_nodeNetwork.gml")
 
 #Opens Cycle Network file, creats a list lines of line, line is in turn a list of strings 
 # from the Cycle Network file where [0] is the cycle node name and [1:] are the unordered nodes contained w/i that cycle
-fcy=open("TLGLNetwork_cycles.txt", "r")
+fcy=open("TLGLNetwork_cycles", "r")
 cycles=fcy.read()
 fcy.close()
 
@@ -209,7 +209,7 @@ for line in lines:
     #ands a cycle node with the attribute of having its list of network nodes
     C.add_node(node)
     cyclesdict[node]=line
-   # print node,line
+#    print node,line
 
 dic={}
 #creates a dictionary for each expanded node in  each cycle node
@@ -233,7 +233,7 @@ for c in C.nodes():
 for key in  dic.keys():
     cycnodes=dic[key]
     inputs=G.in_edges(key)
-    print "INPUT",key,inputs
+    # print "INPUT",key,inputs
     for cnode1 in  range(len(cycnodes)):    
         cyc1=cyclesdict[cycnodes[cnode1]]    
         for cnode2 in  range(len(cycnodes)):
@@ -278,7 +278,7 @@ for v in C.nodes():
 redundantCnodeReduction(C, cyclesdict)
 
 #check for double cycle stable motifs    
-'''for e in C.edges():
+for e in C.edges():
     v1 =e[0]
     v2 =e[1]
     listofcyclelist=[]
@@ -289,11 +289,11 @@ redundantCnodeReduction(C, cyclesdict)
         
 C.remove_edges_from(listofcyclelist)
 for c in listofcyclelist:
-    stabelMotifs.append(c)        '''
+    stabelMotifs.append(c)        
     
 nx.write_gml(C, "TLGL_cycleNetwork_removedCedes.gml")
+print("done")
 setM=set(stabelMotifs)
 print(list(setM))
     
 print('Ding')
- 
