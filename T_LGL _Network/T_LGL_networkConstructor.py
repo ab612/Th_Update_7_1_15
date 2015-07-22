@@ -20,34 +20,14 @@ import math
 import sets
 
 stabelMotifs=[]
-
-def isStableMotif(C,G,cn,cyclesdict):
-    isSM=True
-    for x in range(len(cn)):
-       if (float(x)==int(float(x))):
-           for y in range(x+1, len(cn)):
-                if oppositenodes(C,x,y,cyclesdict):
-                    isSM = False
-                    return isSM        
-       elif (float(y)==int(float(y))):
-            for y in range(x+1, len(cn)):
-                if oppositeCnodes(C,G,x,y,cyclesdict):
-                    isSM = False
-                    return isSM
-    return isSM
-        
             
-                
-
 # in progress function to identifie opposit nodes in cycle networks
 def oppositenodes(C,cnode1,cnode2,cyclesdict):
     oppnodes=False;
     cyc1=cyclesdict[cnode1]
     cyc2=cyclesdict[cnode2]
     for n in cyc1:
-        #if int(n) == float(n): ?
         for m in cyc2:
-             #if int(m) == float(m): ?  do I have to check for compossite nodes
             if float(n) == (-1*float(m)):
                 oppnodes=True
                 break
@@ -90,27 +70,73 @@ def opositeCnodes(C,G,cnode1, cnode2,cyclesdict):
         if oppnodes: break
     return oppnodes
 
-def redundantCnodeReduction(C, cyclesdict):
-    #might need to make 2 functions for this
-    #make a leave loop bool value
-    for cn1 in range(len(C.nodes())):
-        cyc1=cyclesdict[C.nodes[cn1]]
-        s1=set(cyc1)
-        for cn2 in range(cn1+1,len(C.nodes())): 
-            cyc2=cyclesdict[C.nodes[cn2]]
-            s2=set(cyc2)
-            if(len(s1)>len(s2)):
-                if s2.issubset(s1):
-                    C.remove_node(s2)
-                    if isStableMotif(C,s2):
-                        stabelMotifs.append(s2)
-                #remove s2
-            elif(len(s1)<len(s2)):
-                if s1.issubset(s2):
-                    C.remove_node(s1)
-                    if isStableMotif(C,s1):
-                        stabelMotifs.append(s1)
+def oppositExpanNodes(G, node1, node2):
+    oppnodes=False;
+    if(float(node1)!=math.floor(float(node1))):
+        inputn = inputCNodes(G,node1)
+        if(float(node2)!=math.floor(float(node2))):                    
+            inputm = inputCNodes(G,node2)
+            for m1 in inputm:
+                for n1 in inputn:
+                    if float(n1[0]) == (-1*float(m1[0])):
+                      oppnodes=True
+                      return oppnodes  
+        else:
+            for n1 in inputn:
+                if float(n1[0]) == (-1*float(node2)):
+                    oppnodes=True
+                    return oppnodes
+    return oppnodes
 
+#cn is a list of all the elements within possible cycles
+
+def isStableMotif(C,G,cn,cyclesdict):
+    isSM=True
+    setcn=set(cn)
+    for x in range(len(cn)):
+       if (float(cn[x])!=math.floor(float(cn[x]))):
+           ieofx = G.in_edges(cn[x])
+           ###check for parent edges contained w/i the stable moti
+           for e in ieofx:
+               if not (setcn.__contains__(e[0])):
+                   isSM = False
+                   return isSM 
+           for y in range(x+1, len(cn)):
+                if oppositExpanNodes(G, cn[y], cn[x]):
+                    isSM = False
+                    return isSM        
+       elif (float(cn[x])==math.floor(float(cn[x]))):
+            for y in range(x+1, len(cn)):
+                if (float(cn[y])!=math.floor(float(cn[y]))):
+                    if oppositExpanNodes(G, cn[y], cn[x]):
+                        isSM = False
+                        return isSM
+                else:
+                    if (cn[x] == -1*cn[y]):
+                        isSM = False
+                        return isSM 
+      
+    if isSM:
+        print cn,
+    return isSM
+        
+def redundantCnodeReduction(C, cyclesdict):
+    removeC =set()
+    for cn1 in range(len(C.nodes())):
+        if isStableMotif(C,G,cyclesdict[C.nodes()[cn1]],cyclesdict):
+            stabelMotifs.append(C.nodes()[cn1])
+            cyc1=cyclesdict[C.nodes()[cn1]]
+            s1=set(cyc1)
+            for cn2 in range(cn1+1,len(C.nodes())): 
+                cyc2=cyclesdict[C.nodes()[cn2]]
+                s2=set(cyc2)
+                if(len(s1)<len(s2)):
+                    if s1.issubset(s2):
+                        #stabelMotifs.append(C.nodes()[cn1])
+                        removeC.add(C.nodes()[cn2])
+                        removeC.add(C.nodes()[cn1])
+    C.remove_nodes_from(list(removeC))
+    
 # "TH_node_names" is written NodNumber(i.e identifier) \t NodName(i.e. the actual protien or whatever) \n
 # reading in "TH_node_names as a string name
 f = open("TLGLNetwork_names.txt", "r")
@@ -190,14 +216,14 @@ dic={}
 for c in C.nodes():
     '''print c, cycles[c]'''
     for expnode in cyclesdict[c]:
-        if(float(expnode)!=int(float(expnode))):
+        if(float(expnode)!= math.floor(float(expnode))):
             dic[expnode]=[]
 
 # assigns a cycle node for each expanded node
 for c in C.nodes():
     '''print c, cycles[c]'''
     for expnode in cyclesdict[c]:
-        if(float(expnode)!=int(float(expnode))):
+        if(float(expnode)!=math.floor(float(expnode))):
             current=dic[expnode]
             current.append(c)
             dic[expnode]=current
@@ -244,7 +270,30 @@ for e in C.edges():
      if opositeCnodes(C,G,cnode1, cnode2,cyclesdict):
          edgesremove1.append(e)
 C.remove_edges_from(edgesremove1)
+'''
+for v in C.nodes():
+    if(isStableMotif(C, G, cyclesdict[v], cyclesdict)):
+        print v, cyclesdict[v]
+        stabelMotifs.append(v)'''
+redundantCnodeReduction(C, cyclesdict)
 
-nx.write_gml(C, "TLGL_cycleNetwork_removedCedes.gml")
+#check for double cycle stable motifs    
+'''for e in C.edges():
+    v1 =e[0]
+    v2 =e[1]
+    listofcyclelist=[]
+    v = list(set(cyclesdict[v1] + cyclesdict[v2])) 
+    if isStableMotif(C, G, v, cyclesdict):
+        cycleList = (v1, v2)
+        listofcyclelist.append(cycleList)
+        
+C.remove_edges_from(listofcyclelist)
+for c in listofcyclelist:
+    stabelMotifs.append(c)        '''
     
+nx.write_gml(C, "TLGL_cycleNetwork_removedCedes.gml")
+setM=set(stabelMotifs)
+print(list(setM))
+    
+print('Ding')
  
