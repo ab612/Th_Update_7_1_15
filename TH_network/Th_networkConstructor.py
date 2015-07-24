@@ -16,17 +16,19 @@
 # - composite node IDs  are only ever positive decimal #s
 
 import networkx as nx
-import math
+import math 
+import sets
 
+
+stabelMotifs=[]
+            
 # in progress function to identifie opposit nodes in cycle networks
 def oppositenodes(C,cnode1,cnode2,cyclesdict):
     oppnodes=False;
     cyc1=cyclesdict[cnode1]
     cyc2=cyclesdict[cnode2]
     for n in cyc1:
-        #if int(n) == float(n): ?
         for m in cyc2:
-             #if int(m) == float(m): ?  do I have to check for compossite nodes
             if float(n) == (-1*float(m)):
                 oppnodes=True
                 break
@@ -35,14 +37,13 @@ def oppositenodes(C,cnode1,cnode2,cyclesdict):
 
 
 #finds inputs of a composit nodes, inode is a list of incoming edges
+
 def inputCNodes(G,g):
    # for g in G.nodes():
-        print g
+        #print g
         if(float(g)!=math.floor(float(g))):
             innod=G.in_edges(g)
             return innod
-
-
 
 def opositeCnodes(C,G,cnode1, cnode2,cyclesdict):
     oppnodes=False;
@@ -69,29 +70,77 @@ def opositeCnodes(C,G,cnode1, cnode2,cyclesdict):
             if oppnodes: break
         if oppnodes: break
     return oppnodes
-                            
-                    
-''' 
-                    n0 = inputn[0]
-                    n1 = inputn[1]
-                    m0 = inputm[0]
-                    m1 = inputm[1]
-                    if (float(n0) == (-1*float(m0))):
-                        check1= true 
-                    if (float(inputn[1]) == (-1*float(inputm[0]))): 
-                        check2= True
-                    if (float(inputn[1]) == (-1*float(inputm[1]))):
-                        check3= True
-                    if (float(inputn[0]) == (-1*float(inputm[0]))):
-                        check4= True
-                    if ((check1 or check2)or(check3 or check4)):'''
-                        
-            
+
+def oppositExpanNodes(G, node1, node2):
+    oppnodes=False;
+    if(float(node1)!=math.floor(float(node1))):
+        inputn = inputCNodes(G,node1)
+        if(float(node2)!=math.floor(float(node2))):                    
+            inputm = inputCNodes(G,node2)
+            for m1 in inputm:
+                for n1 in inputn:
+                    if float(n1[0]) == (-1*float(m1[0])):
+                      oppnodes=True
+                      return oppnodes  
+        else:
+            for n1 in inputn:
+                if float(n1[0]) == (-1*float(node2)):
+                    oppnodes=True
+                    return oppnodes
+    return oppnodes
+
+#cn is a list of all the elements within possible cycles
+
+def isStableMotif(C,G,cn,cyclesdict):
+    isSM=True
+    setcn=set(cn)
+    for x in range(len(cn)):
+       if (float(cn[x])!=math.floor(float(cn[x]))):
+           ieofx = G.in_edges(cn[x])
+           ###check for parent edges contained w/i the stable moti
+           for e in ieofx:
+               if e[0] not in setcn:
+                   isSM = False
+                   return isSM 
+           for y in range(x+1, len(cn)):
+                if oppositExpanNodes(G, cn[y], cn[x]):
+                    isSM = False
+                    return isSM        
+       elif (float(cn[x])==math.floor(float(cn[x]))):
+            for y in range(x+1, len(cn)):
+                if (float(cn[y])!=math.floor(float(cn[y]))):
+                    if oppositExpanNodes(G, cn[y], cn[x]):
+                        isSM = False
+                        return isSM
+                else:
+                    if (cn[x] == -1*cn[y]):
+                        isSM = False
+                        return isSM 
+      
+   # if isSM:
+        #print cn
+    return isSM
         
+def redundantCnodeReduction(C, cyclesdict):
+    removeC =set()
+    for cn1 in range(len(C.nodes())):
+        if isStableMotif(C,G,cyclesdict[C.nodes()[cn1]],cyclesdict):
+            stabelMotifs.append(C.nodes()[cn1])
+            cyc1=cyclesdict[C.nodes()[cn1]]
+            s1=set(cyc1)
+            for cn2 in range(cn1+1,len(C.nodes())): 
+                cyc2=cyclesdict[C.nodes()[cn2]]
+                s2=set(cyc2)
+                if(len(s1)<len(s2)):
+                    if s1.issubset(s2):
+                        #stabelMotifs.append(C.nodes()[cn1])
+                        removeC.add(C.nodes()[cn2])
+                        removeC.add(C.nodes()[cn1])
+    C.remove_nodes_from(list(removeC))
     
 # "TH_node_names" is written NodNumber(i.e identifier) \t NodName(i.e. the actual protien or whatever) \n
 # reading in "TH_node_names as a string name
-f = open("TH_node_names", "r")
+f = open("ThNetwork_names", "r")
 name=f.read()
 f.close()
 
@@ -104,7 +153,7 @@ for line in names:
     
 #"TH_adjacency list is written NodeNumber \t downstream NodNumbers (spererated by \t) \n
 #creating a adjacency list adjlist[NodNumber][Downstreaam NodeNumbers]
-fadf=open("TH_adjacency list", "r")
+fadf=open("THNetwork_adjlist", "r")
 adjlist=[]
 fad=fadf.read().split("\n")
 fadf.close()
@@ -114,13 +163,11 @@ for line in fad:
     
 # creating a directed network G as the network of Nodes
 G=nx.DiGraph()
-'''for c in range(num_lines) : 
-     G.add_node(names[c].split('\t')[0], nodname = names[c].split('\t')[1])'''
+
 #creating Nodes in node network with string(node ID attribute) 
 # and string(nodename atribute) 
 for line in lines:
     G.add_node(line[0],nodname=line[1])
-
 #for all node IDs in adjacencey list
 for line in adjlist:
     # add each downstream connection to adjacent Node IDs
@@ -130,7 +177,7 @@ for line in adjlist:
 '''for g in G.nodes():
     #print g, nx.get_node_attributes(G, 'nodname')[g]'''
         
-nx.write_gml(G, "th_nodeNetwork.gml")
+nx.write_gml(G, "TH_nodeNetwork.gml")
 
 
 #end node network creation 
@@ -139,7 +186,7 @@ nx.write_gml(G, "th_nodeNetwork.gml")
 
 #Opens Cycle Network file, creats a list lines of line, line is in turn a list of strings 
 # from the Cycle Network file where [0] is the cycle node name and [1:] are the unordered nodes contained w/i that cycle
-fcy=open("ThNetwork_cycles", "r")
+fcy=open("THNetwork_cycles", "r")
 cycles=fcy.read()
 fcy.close()
 
@@ -162,21 +209,21 @@ for line in lines:
     #ands a cycle node with the attribute of having its list of network nodes
     C.add_node(node)
     cyclesdict[node]=line
-    print node,line
+#    print node,line
 
 dic={}
 #creates a dictionary for each expanded node in  each cycle node
 for c in C.nodes():
     '''print c, cycles[c]'''
     for expnode in cyclesdict[c]:
-        if(float(expnode)!=int(float(expnode))):
+        if(float(expnode)!= math.floor(float(expnode))):
             dic[expnode]=[]
 
 # assigns a cycle node for each expanded node
 for c in C.nodes():
     '''print c, cycles[c]'''
     for expnode in cyclesdict[c]:
-        if(float(expnode)!=int(float(expnode))):
+        if(float(expnode)!=math.floor(float(expnode))):
             current=dic[expnode]
             current.append(c)
             dic[expnode]=current
@@ -186,14 +233,14 @@ for c in C.nodes():
 for key in  dic.keys():
     cycnodes=dic[key]
     inputs=G.in_edges(key)
-    print "INPUT",key,inputs
+    # print "INPUT",key,inputs
     for cnode1 in  range(len(cycnodes)):    
         cyc1=cyclesdict[cycnodes[cnode1]]    
         for cnode2 in  range(len(cycnodes)):
             if(cnode2>cnode1):            
                 cyc2=cyclesdict[cycnodes[cnode2]]   
-                print "cyc1",cycnodes[cnode1],cyc1
-                print "cyc2",cycnodes[cnode2],cyc2            
+                #print "cyc1",cycnodes[cnode1],cyc1
+                #print "cyc2",cycnodes[cnode2],cyc2            
                 inters1=[]
                 inters2=[]
                 trueboth=True               
@@ -203,8 +250,8 @@ for key in  dic.keys():
                     if(true1): inters1.append(input[0])
                     if(true2): inters2.append(input[0])
                     trueboth=((true1 and true2) or (not true1 and not true2)) and trueboth
-                if(len(inters1)!=len(inters2)): C.add_edge(cycnodes[cnode1], cycnodes[cnode2]); print "NODE",cycnodes[cnode2],cycnodes[cnode1]             
-                elif(len(inters1)==len(inters2) and trueboth): C.add_edge(cycnodes[cnode1], cycnodes[cnode2]); print "NODE",cycnodes[cnode2],cycnodes[cnode1]
+                if(len(inters1)!=len(inters2)): C.add_edge(cycnodes[cnode1], cycnodes[cnode2]); #print "NODE",cycnodes[cnode2],cycnodes[cnode1]             
+                elif(len(inters1)==len(inters2) and trueboth): C.add_edge(cycnodes[cnode1], cycnodes[cnode2]); #print "NODE",cycnodes[cnode2],cycnodes[cnode1]
 
 #removing edges that connect cycles with opposite nodes            
 edgesremove=[]
@@ -215,6 +262,8 @@ for e in C.edges():
         edgesremove.append(e)
 C.remove_edges_from(edgesremove);
 
+
+
 #removing edges that connect cycles with opposite composit nodes
 edgesremove1=[]
 for e in C.edges():
@@ -224,6 +273,33 @@ for e in C.edges():
          edgesremove1.append(e)
 C.remove_edges_from(edgesremove1)
 
-nx.write_gml(C, "th_cycleNetwork_removedCedes.gml")
+
+#for v in C.nodes():
+ #   if(isStableMotif(C, G, cyclesdict[v], cyclesdict)):
+  #      print v, cyclesdict[v]
+   #     stabelMotifs.append(v)
+redundantCnodeReduction(C, cyclesdict)
+
+
+
+#check for double cycle stable motifs    
+for e in C.edges():
+    v1 =e[0]
+    v2 =e[1]
+    listofcyclelist=[]
+    v = list(set(cyclesdict[v1] + cyclesdict[v2])) 
+    if isStableMotif(C, G, v, cyclesdict):
+        cycleList = (v1, v2)
+        listofcyclelist.append(cycleList)
+        
+C.remove_edges_from(listofcyclelist)
+for c in listofcyclelist:
+    stabelMotifs.append(c)        
     
- 
+nx.write_gml(C, "TH_M3.gml")
+
+print("done")
+setM=set(stabelMotifs)
+print(list(setM))
+    
+print('Ding') 

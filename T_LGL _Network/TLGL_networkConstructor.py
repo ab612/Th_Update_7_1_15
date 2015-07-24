@@ -270,12 +270,17 @@ for e in C.edges():
      if opositeCnodes(C,G,cnode1, cnode2,cyclesdict):
          edgesremove1.append(e)
 C.remove_edges_from(edgesremove1)
-'''
-for v in C.nodes():
-    if(isStableMotif(C, G, cyclesdict[v], cyclesdict)):
-        print v, cyclesdict[v]
-        stabelMotifs.append(v)'''
+
+
+#for v in C.nodes():
+ #   if(isStableMotif(C, G, cyclesdict[v], cyclesdict)):
+  #      print v, cyclesdict[v]
+   #     stabelMotifs.append(v)
 redundantCnodeReduction(C, cyclesdict)
+
+
+nx.write_gml(C, "TLGL_M2.gml") 
+'''
 
 #check for double cycle stable motifs    
 for e in C.edges():
@@ -291,9 +296,9 @@ C.remove_edges_from(listofcyclelist)
 for c in listofcyclelist:
     stabelMotifs.append(c)        
     
-nx.write_gml(C, "TLGL_cycleNetwork_removedCedes.gml")
+
 print("done")
 setM=set(stabelMotifs)
 print(list(setM))
     
-print('Ding')
+print('Ding')  '''
